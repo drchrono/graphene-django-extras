@@ -10,7 +10,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRel
 from django.core.exceptions import ValidationError, ImproperlyConfigured
 from django.db.models import NOT_PROVIDED, QuerySet, Manager, Model, ManyToOneRel, ManyToManyRel
 from django.db.models.base import ModelBase
-from graphql import ResolveInfo
 from graphql.execution.base import get_field_def
 from graphene.utils.str_converters import to_snake_case
 from graphene_django.utils import is_valid_django_model
@@ -179,7 +178,6 @@ def get_type(_type):
 def get_fields(info):
     fragments = info.fragments
     field_asts = info.field_asts[0].selection_set.selections
-    _type = get_type(info.return_type)
 
     for field_ast in field_asts:
         field_name = field_ast.name.value
@@ -195,7 +193,7 @@ def is_required(field):
     try:
         blank = getattr(field, "blank", getattr(field, "field", None))
         default = getattr(field, "default", getattr(field, "field", None))
-        null = getattr(field, "null", getattr(field, "field", None))
+        # null = getattr(field, "null", getattr(field, "field", None))
 
         if blank is None:
             blank = True

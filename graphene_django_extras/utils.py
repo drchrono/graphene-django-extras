@@ -8,7 +8,14 @@ from django import VERSION as DJANGO_VERSION
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRel
 from django.core.exceptions import ValidationError, ImproperlyConfigured
-from django.db.models import NOT_PROVIDED, QuerySet, Manager, Model, ManyToOneRel, ManyToManyRel
+from django.db.models import (
+    NOT_PROVIDED,
+    QuerySet,
+    Manager,
+    Model,
+    ManyToOneRel,
+    ManyToManyRel,
+)
 from django.db.models.base import ModelBase
 from graphql.execution.base import get_field_def
 from graphene.utils.str_converters import to_snake_case
@@ -86,7 +93,9 @@ def get_model_fields(model):
     reverse_fields = list(get_reverse_fields(model))
     exclude_fields = [field[1] for field in reverse_fields]
 
-    local_fields = [(field.name, field) for field in all_fields_list if field not in exclude_fields]
+    local_fields = [
+        (field.name, field) for field in all_fields_list if field not in exclude_fields
+    ]
 
     all_fields = local_fields + reverse_fields
 
@@ -112,7 +121,7 @@ def get_obj(app_label, model_name, object_id):
 
     except model.DoesNotExist:
         return None
-    except LookupError as e:
+    except LookupError:
         pass
     except ValidationError as e:
         raise ValidationError(e.__str__())
@@ -147,7 +156,7 @@ def create_obj(django_model, new_obj_key=None, *args, **kwargs):
         new_obj.full_clean()
         new_obj.save()
         return new_obj
-    except LookupError as e:
+    except LookupError:
         pass
     except ValidationError as e:
         raise ValidationError(e.__str__())
@@ -166,7 +175,9 @@ def clean_dict(d):
         return d
     if isinstance(d, list):
         return [v for v in (clean_dict(v) for v in d) if v]
-    return OrderedDict([(k, v) for k, v in ((k, clean_dict(v)) for k, v in list(d.items())) if v])
+    return OrderedDict(
+        [(k, v) for k, v in ((k, clean_dict(v)) for k, v in list(d.items())) if v]
+    )
 
 
 def get_type(_type):
@@ -193,7 +204,7 @@ def is_required(field):
     try:
         blank = getattr(field, "blank", getattr(field, "field", None))
         default = getattr(field, "default", getattr(field, "field", None))
-        # null = getattr(field, "null", getattr(field, "field", None))
+        #  null = getattr(field, "null", getattr(field, "field", None))
 
         if blank is None:
             blank = True
@@ -277,24 +288,31 @@ def get_related_fields(model):
 
 
 def find_field(field, fields_dict):
-    temp = fields_dict.get(field.name.value, fields_dict.get(to_snake_case(field.name.value), None))
+    temp = fields_dict.get(
+        field.name.value, fields_dict.get(to_snake_case(field.name.value), None)
+    )
 
     return temp
 
 
 def recursive_params(
-    root_info,
-    current_parent_type,
-    selection_set,
-    fragments,
-    available_related_fields,
-    select_related,
-    prefetch_related,
+        root_info,
+        current_parent_type,
+        selection_set,
+        fragments,
+        available_related_fields,
+        select_related,
+        prefetch_related,
 ):
 
     for field in selection_set.selections:
+        field_def = get_field_def(root_info.schema, current_parent_type, field.name.value)
+        field_type = get_type(field_def.type)
+
         if isinstance(field, FragmentSpread) and fragments:
             a, b = recursive_params(
+                root_info,
+                field_type,
                 fragments[field.name.value].selection_set,
                 fragments,
                 available_related_fields,
@@ -308,6 +326,7 @@ def recursive_params(
         if isinstance(field, InlineFragment):
             a, b = recursive_params(
                 root_info,
+                field_type,
                 field.selection_set,
                 fragments,
                 available_related_fields,
@@ -318,24 +337,14 @@ def recursive_params(
             [prefetch_related.append(x) for x in b if x not in prefetch_related]
             continue
 
-        field_def = get_field_def(root_info.schema, current_parent_type, field.name.value)
-        field_type = get_type(field_def.type)
-
         optimization_hints = getattr(field_def.resolver, "optimization_hints", None)
         if optimization_hints:
-            [
-                select_related.append(x)
-                for x in optimization_hints.select_related
-                if x not in select_related
-            ]
-            [
-                prefetch_related.append(x)
-                for x in optimization_hints.prefetch_related
-                if x not in prefetch_related
-            ]
+            select_related = sorted(set(select_related) | optimization_hints.select_related)
+            prefetch_related = sorted(set(prefetch_related) | optimization_hints.prefetch_related)
 
         temp = available_related_fields.get(
-            field.name.value, available_related_fields.get(to_snake_case(field.name.value), None)
+            field.name.value,
+            available_related_fields.get(to_snake_case(field.name.value), None),
         )
 
         if temp and temp.name not in [prefetch_related + select_related]:
@@ -360,7 +369,6 @@ def recursive_params(
 
 
 def queryset_factory(manager, info, **kwargs):
-
     fields_asts = info.field_asts
     fragments = info.fragments
 
@@ -371,7 +379,9 @@ def queryset_factory(manager, info, **kwargs):
     for f in kwargs.keys():
         temp = available_related_fields.get(f.split("__", 1)[0], None)
         if temp:
-            if (temp.many_to_many or temp.one_to_many) and temp.name not in prefetch_related:
+            if (
+                temp.many_to_many or temp.one_to_many
+            ) and temp.name not in prefetch_related:
                 prefetch_related.append(temp.name)
             else:
                 select_related.append(temp.name)

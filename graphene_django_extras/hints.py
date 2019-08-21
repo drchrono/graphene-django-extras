@@ -11,9 +11,9 @@ class OptimizationHints(object):
 
 def resolver_hints(*args, **kwargs):
     optimization_hints = OptimizationHints(*args, **kwargs)
-    def apply_resolver_hints(function):
-        def wrapper(resolver, *args, **kwargs):
-            resolver.optimization_hints = optimization_hints
-            return function(resolver, *args, **kwargs)
-        return wrapper
+
+    def apply_resolver_hints(resolver):
+        resolver.optimization_hints = optimization_hints
+        return resolver
+
     return apply_resolver_hints

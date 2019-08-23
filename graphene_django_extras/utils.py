@@ -17,6 +17,7 @@ from django.db.models import (
     ManyToManyRel,
 )
 from django.db.models.base import ModelBase
+from graphql.execution.base import get_field_def
 from graphene.utils.str_converters import to_snake_case
 from graphene_django.utils import is_valid_django_model
 from graphql import GraphQLList, GraphQLNonNull
@@ -295,13 +296,23 @@ def find_field(field, fields_dict):
 
 
 def recursive_params(
-    selection_set, fragments, available_related_fields, select_related, prefetch_related
+        root_info,
+        current_parent_type,
+        selection_set,
+        fragments,
+        available_related_fields,
+        select_related,
+        prefetch_related,
 ):
 
     for field in selection_set.selections:
+        field_def = get_field_def(root_info.schema, current_parent_type, field.name.value)
+        field_type = get_type(field_def.type)
 
         if isinstance(field, FragmentSpread) and fragments:
             a, b = recursive_params(
+                root_info,
+                field_type,
                 fragments[field.name.value].selection_set,
                 fragments,
                 available_related_fields,
@@ -314,6 +325,8 @@ def recursive_params(
 
         if isinstance(field, InlineFragment):
             a, b = recursive_params(
+                root_info,
+                field_type,
                 field.selection_set,
                 fragments,
                 available_related_fields,
@@ -323,6 +336,11 @@ def recursive_params(
             [select_related.append(x) for x in a if x not in select_related]
             [prefetch_related.append(x) for x in b if x not in prefetch_related]
             continue
+
+        optimization_hints = getattr(field_def.resolver, "optimization_hints", None)
+        if optimization_hints:
+            select_related = sorted(set(select_related) | optimization_hints.select_related)
+            prefetch_related = sorted(set(prefetch_related) | optimization_hints.prefetch_related)
 
         temp = available_related_fields.get(
             field.name.value,
@@ -336,6 +354,8 @@ def recursive_params(
                 select_related.append(temp.name)
         elif getattr(field, "selection_set", None):
             a, b = recursive_params(
+                root_info,
+                field_type,
                 field.selection_set,
                 fragments,
                 available_related_fields,
@@ -348,7 +368,9 @@ def recursive_params(
     return select_related, prefetch_related
 
 
-def queryset_factory(manager, fields_asts=None, fragments=None, **kwargs):
+def queryset_factory(manager, info, **kwargs):
+    fields_asts = info.field_asts
+    fragments = info.fragments
 
     select_related = []
     prefetch_related = []
@@ -364,8 +386,13 @@ def queryset_factory(manager, fields_asts=None, fragments=None, **kwargs):
             else:
                 select_related.append(temp.name)
 
+    base_field_def = get_field_def(info.schema, info.parent_type, info.field_name)
+    base_type = get_type(base_field_def.type)
+
     if fields_asts:
         select_related, prefetch_related = recursive_params(
+            info,
+            base_type,
             fields_asts[0].selection_set,
             fragments,
             available_related_fields,

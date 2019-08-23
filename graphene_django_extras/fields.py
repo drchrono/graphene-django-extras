@@ -10,12 +10,13 @@ from graphene_django.utils import (
     is_valid_django_model,
     DJANGO_FILTER_INSTALLED,
 )
+from graphql.execution.base import get_field_def
 from graphene_django_extras.settings import graphql_api_settings
 
 from graphene_django_extras.filters.filter import get_filterset_class
 from .base_types import DjangoListObjectBase
 from .paginations.pagination import BaseDjangoGraphqlPagination
-from .utils import get_extra_filters, queryset_factory, get_related_fields, find_field
+from .utils import get_extra_filters, queryset_factory, get_related_fields, find_field, get_type
 
 
 # *********************************************** #
@@ -57,7 +58,7 @@ class DjangoFilterListField(Field):
         extra_filter_meta=None,
         filterset_class=None,
         *args,
-        **kwargs,
+        **kwargs
     ):
 
         if DJANGO_FILTER_INSTALLED:
@@ -129,7 +130,7 @@ class DjangoFilterListField(Field):
                 qs = None
 
         if qs is None:
-            qs = queryset_factory(manager, info.field_asts, info.fragments, **kwargs)
+            qs = queryset_factory(manager, info, **kwargs)
             qs = filterset_class(
                 data=filter_kwargs, queryset=qs, request=info.context
             ).qs
@@ -161,7 +162,7 @@ class DjangoFilterPaginateListField(Field):
         extra_filter_meta=None,
         filterset_class=None,
         *args,
-        **kwargs,
+        **kwargs
     ):
 
         _fields = _type._meta.filter_fields
@@ -219,14 +220,11 @@ class DjangoFilterPaginateListField(Field):
     def model(self):
         return self.type.of_type._meta.node._meta.model
 
-    def get_queryset(self, manager, info, **kwargs):
-        return queryset_factory(manager, info.field_asts, info.fragments, **kwargs)
-
     def list_resolver(
         self, manager, filterset_class, filtering_args, root, info, **kwargs
     ):
         filter_kwargs = {k: v for k, v in kwargs.items() if k in filtering_args}
-        qs = self.get_queryset(manager, info, **kwargs)
+        qs = queryset_factory(manager, info, **kwargs)
         qs = filterset_class(data=filter_kwargs, queryset=qs, request=info.context).qs
 
         if root and is_valid_django_model(root._meta.model):
@@ -258,7 +256,7 @@ class DjangoListObjectField(Field):
         extra_filter_meta=None,
         filterset_class=None,
         *args,
-        **kwargs,
+        **kwargs
     ):
 
         if DJANGO_FILTER_INSTALLED:
@@ -299,7 +297,7 @@ class DjangoListObjectField(Field):
         self, manager, filterset_class, filtering_args, root, info, **kwargs
     ):
 
-        qs = queryset_factory(manager, info.field_asts, info.fragments, **kwargs)
+        qs = queryset_factory(manager, info, **kwargs)
 
         filter_kwargs = {k: v for k, v in kwargs.items() if k in filtering_args}
 

@@ -13,13 +13,17 @@ cache:
 matrix:
   fast_finish: true
   include:
-      - { python: "3.6", env: DJANGO=2.0 }
-      - { python: "3.6", env: DJANGO=2.1 }
+      - { python: "3.6", env: DJANGO=1.11 TOXENV=py36-django111 }
+      - { python: "3.6", env: DJANGO=2.0 TOXENV=py36-django20 }
+      - { python: "3.6", env: DJANGO=2.1 TOXENV=py36-django21 }
+      - { python: "3.6", env: DJANGO=2.2 TOXENV=py36-django22 }
 
-      - { python: "3.7", env: DJANGO=2.0 }
-      - { python: "3.7", env: DJANGO=2.1 }
+      - { python: "3.7", env: DJANGO=1.11 TOXENV=py37-django111 }
+      - { python: "3.7", env: DJANGO=2.0 TOXENV=py37-django20 }
+      - { python: "3.7", env: DJANGO=2.1 TOXENV=py37-django21 }
+      - { python: "3.7", env: DJANGO=2.2 TOXENV=py37-django22 }
 
-      - { python: "3.6", env: TOXENV=quality }
+      - { python: "3.7", env: TOXENV=quality }
 
 before_install:
   - pip install codecov
@@ -29,8 +33,12 @@ install:
   - pip install tox-travis
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
   - source $HOME/.poetry/env
+
 script:
   - tox
+
+after_script:
+  - bash ./scripts/travis_telegram_notification.sh
 
 after_success:
   - pip install codecov

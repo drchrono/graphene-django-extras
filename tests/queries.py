@@ -9,12 +9,16 @@ ALL_USERS = """query {
 ALL_USERS1 = """query {
   allUsers1 {
       id
+      username
+      firstName
+      lastName
+      email
   }
 }
 """
 ALL_USERS2 = """query {
   allUsers2 {
-      id
+      username
   }
 }
 """
@@ -29,6 +33,24 @@ ALL_USERS3_WITH_FILTER = """query {
     results {
       %(fields)s
     }
+  }
+}
+"""
+
+# Queries for DjangoSerializerType
+USER = """query {
+  user2 (%(filter)s) {
+      %(fields)s
+  }
+}
+"""
+
+USERS = """query {
+  users(%(filter)s){
+    results(%(pagination)s){
+        %(fields)s
+    },
+    totalCount
   }
 }
 """

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from graphql.type.directives import specified_directives as default_directives
 
+from .date import DateGraphQLDirective
 from .list import ShuffleGraphQLDirective, SampleGraphQLDirective
 from .numbers import FloorGraphQLDirective, CeilGraphQLDirective
 from .string import (
@@ -21,20 +22,16 @@ from .string import (
     ReplaceGraphQLDirective,
 )
 
-try:
-    import dateutil  # noqa: 401
-    from .date import DateGraphQLDirective
-
-    date_directives = (DateGraphQLDirective,)
-    DATEUTIL_INSTALLED = True
-except ImportError:
-    date_directives = ()
-    DATEUTIL_INSTALLED = False
-
-
-list_directives = (ShuffleGraphQLDirective, SampleGraphQLDirective)
-numbers_directives = (FloorGraphQLDirective, CeilGraphQLDirective)
-string_directives = (
+all_directives = (
+    # date
+    DateGraphQLDirective,
+    # list
+    ShuffleGraphQLDirective,
+    SampleGraphQLDirective,
+    # numbers
+    FloorGraphQLDirective,
+    CeilGraphQLDirective,
+    # string
     DefaultGraphQLDirective,
     Base64GraphQLDirective,
     NumberGraphQLDirective,
@@ -50,10 +47,6 @@ string_directives = (
     TitleCaseGraphQLDirective,
     CenterGraphQLDirective,
     ReplaceGraphQLDirective,
-)
-
-all_directives = (
-    date_directives + list_directives + numbers_directives + string_directives
 )
 
 

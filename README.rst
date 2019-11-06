@@ -1,9 +1,7 @@
 
 Graphene-Django-Extras
 ======================
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+|build-status| |coverage-status| |python-support| |license| |code-style| |pypi-downloads|
 
 This package add some extra functionalities to **graphene-django** to facilitate the graphql use without Relay:
   1. Allows pagination and filtering on Queries.
@@ -80,11 +78,12 @@ DjangoListObjectType classes pagination definitions on settings.py like this:
             model = User
             description = " Type definition for a single user object "
             filter_fields = {
-                'id': ['exact', ],
-                'first_name': ['icontains', 'iexact'],
-                'last_name': ['icontains', 'iexact'],
-                'username': ['icontains', 'iexact'],
-                'email': ['icontains', 'iexact']
+                "id": ("exact", ),
+                "first_name": ("icontains", "iexact"),
+                "last_name": ("icontains", "iexact"),
+                "username": ("icontains", "iexact"),
+                "email": ("icontains", "iexact"),
+                "is_staff": ("exact", ),
             }
 
 
@@ -99,16 +98,16 @@ DjangoListObjectType classes pagination definitions on settings.py like this:
         """ With this type definition it't necessary a mutation definition for models """
 
         class Meta:
-            description = " User's model type definition "
+            description = " User model type definition "
             serializer_class = UserSerializer
             pagination = LimitOffsetGraphqlPagination(default_limit=25, ordering="-username") # ordering can be: string, tuple or list
             filter_fields = {
-                'id': ['exact', ],
-                'first_name': ['icontains', 'iexact'],
-                'last_name': ['icontains', 'iexact'],
-                'username': ['icontains', 'iexact'],
-                'email': ['icontains', 'iexact'],
-                'is_staff': ['exact']
+                "id": ("exact", ),
+                "first_name": ("icontains", "iexact"),
+                "last_name": ("icontains", "iexact"),
+                "username": ("icontains", "iexact"),
+                "email": ("icontains", "iexact"),
+                "is_staff": ("exact", ),
             }
 
 
@@ -184,17 +183,17 @@ You can define traditional mutations that use InputTypes or Mutations based on D
 
     class Queries(graphene.ObjectType):
         # Possible User list queries definitions
-        users = DjangoListObjectField(UserListType, description=_('All Users query'))
+        users = DjangoListObjectField(UserListType, description='All Users query')
         users1 = DjangoFilterPaginateListField(UserType, pagination=LimitOffsetGraphqlPagination())
         users2 = DjangoFilterListField(UserType)
-        users3 = DjangoListObjectField(UserListType, filterset_class=UserFilter, description=_('All Users query'))
+        users3 = DjangoListObjectField(UserListType, filterset_class=UserFilter, description='All Users query')
 
         # Defining a query for a single user
         # The DjangoObjectField have a ID type input field, that allow filter by id and is't necessary to define resolve function
-        user = DjangoObjectField(UserType, description=_('Single User query'))
+        user = DjangoObjectField(UserType, description='Single User query')
 
         # Another way to define a query to single user
-        user1 = UserListType.RetrieveField(description=_('User List with pagination and filtering'))
+        user1 = UserListType.RetrieveField(description='User List with pagination and filtering')
 
         # Exist two ways to define single or list user queries with DjangoSerializerType
         user_retrieve1, user_list1 = UserModelType.QueryFields(description='Some description message for both queries',
@@ -512,6 +511,27 @@ You can use this shortcuts too:
 
 Change Log:
 -----------
+*******
+v0.4.8:
+*******
+1. Upgrade graphene-django dependency to version == 2.6.0.
+
+*******
+v0.4.6:
+*******
+1. Upgrade graphql-core dependency to version >= 2.2.1.
+2. Upgrade graphene dependency to version >= 2.1.8.
+3. Upgrade graphene-django dependency to version >= 2.5.0.
+4. Upgrade django-filter dependency to version >= 2.2.0.
+5. Fixed bug 'DjangoSerializerOptions' object has no attribute 'interfaces' after update to graphene==2.1.8.
+6. The tests were refactored and added some extra tests for DjangoSerializerType.
+
+*******
+v0.4.5:
+*******
+1. Fixed compatibilities issues to use graphene-django>=2.3.2.
+2. Improved code quality and use Black code format.
+3. Fixed minor bug with "time ago" date directive.
 
 *******
 v0.3.7:
@@ -740,3 +760,27 @@ v0.0.1-beta.5:
 v0.0.1-beta.4:
 **************
 1. First commit
+
+
+.. references-marker
+.. |latest-version| image:: https://img.shields.io/pypi/v/graphene-django-extras.svg
+    :target: https://pypi.python.org/pypi/graphene-django-extras/
+    :alt: Latest version
+.. |build-status| image:: https://img.shields.io/travis/eamigo86/graphene-django-extras/master.svg
+    :target: https://travis-ci.org/eamigo86/graphene-django-extras
+    :alt: Build status
+.. |coverage-status| image:: https://codecov.io/gh/eamigo86/graphene-django-extras/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/eamigo86/graphene-django-extras
+    :alt: Coverage status
+.. |python-support| image:: https://img.shields.io/pypi/pyversions/graphene-django-extras.svg
+    :target: https://pypi.python.org/pypi/graphene-django-extras
+    :alt: Python versions
+.. |license| image:: https://img.shields.io/pypi/l/graphene-django-extras.svg
+    :target: https://github.com/eamigo86/graphene-django-extras/blob/master/LICENSE
+    :alt: Software license
+.. |code-style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
+    :alt: Black
+.. |pypi-downloads| image:: https://img.shields.io/pypi/dm/graphene-django-extras?style=flat
+    :target: https://pypi.python.org/pypi/graphene-django-extras
+    :alt: PyPI Downloads

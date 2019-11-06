@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 from collections import OrderedDict
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import (
     GenericForeignKey,
@@ -25,7 +26,6 @@ from graphene import (
 from graphene.types.json import JSONString
 from graphene.utils.str_converters import to_camel_case, to_const
 from graphene_django.compat import ArrayField, HStoreField, RangeField, JSONField
-from graphene_django.fields import DjangoListField
 from graphene_django.utils import import_single_dispatch
 
 from .base_types import (
@@ -36,7 +36,7 @@ from .base_types import (
     CustomDate,
     Binary,
 )
-from .fields import DjangoFilterListField
+from .fields import DjangoFilterListField, DjangoListField
 from .utils import is_required, get_model_fields, get_related_model
 
 singledispatch = import_single_dispatch()
@@ -237,7 +237,7 @@ def convert_field_to_int(field, registry=None, input_flag=None, nested_field=Fal
 def convert_field_to_boolean(field, registry=None, input_flag=None, nested_field=False):
     required = is_required(field) and input_flag == "create"
     if required:
-        return NonNull(Boolean, description=field.help_text)
+        return NonNull(Boolean, description=field.help_text or field.verbose_name)
     return Boolean(description=field.help_text)
 
 
@@ -321,7 +321,8 @@ def convert_field_to_list_or_connection(
     def dynamic_type():
         if input_flag and not nested_field:
             return DjangoListField(
-                ID, required=is_required(field) and input_flag == "create"
+                ID, required=is_required(field) and input_flag == "create",
+                description=field.help_text or field.verbose_name,
             )
         else:
             _type = registry.get_type_for_model(model, for_input=input_flag)
@@ -333,11 +334,13 @@ def convert_field_to_list_or_connection(
                 return DjangoFilterListField(
                     _type,
                     required=is_required(field) and input_flag == "create",
+                    description=field.help_text or field.verbose_name,
                     filterset_class=_type._meta.filterset_class,
                 )
             else:
                 return DjangoListField(
                     _type, required=is_required(field) and input_flag == "create"
+                    description=field.help_text or field.verbose_name,
                 )
 
     return Dynamic(dynamic_type)

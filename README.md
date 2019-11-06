@@ -2,23 +2,18 @@
 ---
 
 # Graphene-Django-Extras
-[![build-status-image]][travis]
-[![coverage-status-image]][codecov]
-[![pypi-version]][pypi]
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+![Travis (.org) branch](https://img.shields.io/travis/eamigo86/graphene-django-extras/master)
+![Codecov](https://img.shields.io/codecov/c/github/eamigo86/graphene-django-extras)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/graphene-django-extras)
+![PyPI](https://img.shields.io/pypi/v/graphene-django-extras?color=blue)
+![PyPI - License](https://img.shields.io/pypi/l/graphene-django-extras)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/graphene-django-extras?style=flat)
+![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-
-[build-status-image]: https://secure.travis-ci.org/encode/graphene-django-extras.svg?branch=master
-[travis]: https://travis-ci.org/eamigo86/graphene-django-extras?branch=master
-[coverage-status-image]: https://img.shields.io/codecov/c/gh/encode/graphene-django-extras/master.svg
-[codecov]: https://codecov.io/gh/eamigo86/graphene-django-extras?branch=master
-[pypi-version]: https://img.shields.io/pypi/v/graphene_django_extras.svg
-[pypi]: https://pypi.org/project/graphene_django_extras/
-
-This package add some extra functionalities to graphene-django to facilitate the graphql use without Relay:
-  1. Allows pagination and filtering on Queries.
-  2. Allows to define DjangoRestFramework serializers based Mutations.
-  3. Allows use Directives on Queries and Fragments.
+This package adds some extra functionalities to graphene-django to facilitate the graphql use without Relay:
+  1. Allow pagination and filtering on Queries.
+  2. Allow defining DjangoRestFramework serializers based on Mutations.
+  3. Allow using Directives on Queries and Fragments.
 
 **NOTE:** Subscription support was moved to [graphene-django-subscriptions](https://github.com/eamigo86/graphene-django-subscriptions).
 
@@ -82,11 +77,12 @@ class UserType(DjangoObjectType):
         model = User
         description = " Type definition for a single user "
         filter_fields = {
-            'id': ['exact', ],
-            'first_name': ['icontains', 'iexact'],
-            'last_name': ['icontains', 'iexact'],
-            'username': ['icontains', 'iexact'],
-            'email': ['icontains', 'iexact']
+            "id": ("exact", ),
+            "first_name": ("icontains", "iexact"),
+            "last_name": ("icontains", "iexact"),
+            "username": ("icontains", "iexact"),
+            "email": ("icontains", "iexact"),
+            "is_staff": ("exact", ),
         }
 
 
@@ -101,16 +97,16 @@ class UserModelType(DjangoSerializerType):
     """ With this type definition it't necessary a mutation definition for user's model """
 
     class Meta:
-        description = " User's model type definition "
+        description = " User model type definition "
         serializer_class = UserSerializer
         pagination = LimitOffsetGraphqlPagination(default_limit=25, ordering="-username") # ordering can be: string, tuple or list
         filter_fields = {
-            'id': ['exact', ],
-            'first_name': ['icontains', 'iexact'],
-            'last_name': ['icontains', 'iexact'],
-            'username': ['icontains', 'iexact'],
-            'email': ['icontains', 'iexact'],
-            'is_staff': ['exact']
+            "id": ("exact", ),
+            "first_name": ("icontains", "iexact"),
+            "last_name": ("icontains", "iexact"),
+            "username": ("icontains", "iexact"),
+            "email": ("icontains", "iexact"),
+            "is_staff": ("exact", ),
         }
 ```
 
@@ -177,25 +173,31 @@ from .mutations import UserMutation, UserSerializerMutation
 
 class Queries(graphene.ObjectType):
     # Possible User list queries definitions
-    users = DjangoListObjectField(UserListType, description=_('All Users query'))
+    users = DjangoListObjectField(UserListType, description='All Users query')
     users1 = DjangoFilterPaginateListField(UserType, pagination=LimitOffsetGraphqlPagination())
     users2 = DjangoFilterListField(UserType)
-    users3 = DjangoListObjectField(UserListType, filterset_class=UserFilter, description=_('All Users query'))
+    users3 = DjangoListObjectField(UserListType, filterset_class=UserFilter, description='All Users query')
 
     # Defining a query for a single user
     # The DjangoObjectField have a ID type input field, that allow filter by id and is't necessary to define resolve function
-    user = DjangoObjectField(UserType, description=_('Single User query'))
+    user = DjangoObjectField(UserType, description='Single User query')
 
     # Another way to define a query to single user
-    user1 = UserListType.RetrieveField(description=_('User List with pagination and filtering'))
+    user1 = UserListType.RetrieveField(description='User List with pagination and filtering')
 
     # Exist two ways to define single or list user queries with DjangoSerializerType
-    user_retrieve1, user_list1 = UserModelType.QueryFields(description='Some description message for both queries',
-                                                           deprecation_reason='Some deprecation message for both queries')
-    user_retrieve2 = UserModelType.RetrieveField(description='Some description message for retrieve query',
-                                                 deprecation_reason='Some deprecation message for retrieve query')
-    user_list2 = UserModelType.ListField(description='Some description message for list query',
-                                         deprecation_reason='Some deprecation message for list query')
+    user_retrieve1, user_list1 = UserModelType.QueryFields(
+        description='Some description message for both queries',
+        deprecation_reason='Some deprecation message for both queries'
+    )
+    user_retrieve2 = UserModelType.RetrieveField(
+        description='Some description message for retrieve query',
+        deprecation_reason='Some deprecation message for retrieve query'
+    )
+    user_list2 = UserModelType.ListField(
+        description='Some description message for list query',
+        deprecation_reason='Some deprecation message for list query'
+    )
 
 class Mutations(graphene.ObjectType):
     user_create = UserSerializerMutation.CreateField(deprecation_reason='Some one deprecation message')
@@ -205,7 +207,8 @@ class Mutations(graphene.ObjectType):
     # Exist two ways to define mutations with DjangoSerializerType
     user_create1, user_delete1, user_update1 = UserModelType.MutationFields(
         description='Some description message for create, delete and update mutations',
-        deprecation_reason='Some deprecation message for create, delete and update mutations')
+        deprecation_reason='Some deprecation message for create, delete and update mutations'
+    )
 
     user_create2 = UserModelType.CreateField(description='Description message for create')
     user_delete2 = UserModelType.DeleteField(description='Description message for delete')
@@ -230,8 +233,8 @@ GRAPHENE = {
 }
 ```
 
-2. You must add the *directives* param with yours custom directives to your schema definition. This module come with
-some common directives for you, this directives allow to you format strings, numbers, lists, and dates (optional), and
+2. You must add the *directives* param with your custom directives to your schema definition. This module comes with
+some common directives for you, these directives allow to you format strings, numbers, lists, and dates (optional), and
 you can load like this:
 
 ```python
@@ -244,7 +247,7 @@ schema = graphene.Schema(
     directives=all_directives
 )
 ```
-**NOTE**: Date directive depends of *dateutil* module, so if you do not have installed it, this directive will not be
+**NOTE**: Date directive depends on *dateutil* module, so if you do not have installed it, this directive will not be
 available. You can install *dateutil* module manually:
 ```
 pip install python-dateutil
@@ -290,7 +293,7 @@ versa.
 12. **StripGraphQLDirective**: Take a optional 'chars' string argument(default=" ").
 Return the taken string with the leading and trailing characters removed. The 'chars' argument is not a prefix or
 suffix; rather, all combinations of its values are stripped.
-13. **TitleCaseGraphQLDirective**: Return the taken string titlecased, where words start with an uppercase character
+13. **TitleCaseGraphQLDirective**: Return the taken string title-cased, where words start with an uppercase character
 and the remaining characters are lowercase.
 14. **CenterGraphQLDirective**: Take a 'width' string argument and a optional 'fillchar' string argument(default=" ").
 Return the taken string centered with the 'width' argument as new length. Padding is done using the specified
@@ -477,7 +480,7 @@ And we get this output data:
   }
 }
 ```
-As we see, the directives is a easy way to format output data on queries, and it's can be put together like a chain.
+As we see, the directives are an easy way to format output data on queries, and it's can be put together like a chain.
 
 **List of possible date's tokens**:
 "YYYY", "YY", "WW", "W", "DD", "DDDD", "d", "ddd", "dddd", "MM", "MMM", "MMMM", "HH", "hh", "mm", "ss", "A", "ZZ", "z".
@@ -490,6 +493,21 @@ You can use this shortcuts too:
 
 
 ## Change Log:
+#### v0.4.8:
+    1. Upgrade graphene-django dependency to version == 2.6.0.
+
+#### v0.4.6:
+    1. Upgrade graphql-core dependency to version >= 2.2.1.
+    2. Upgrade graphene dependency to version >= 2.1.8.
+    3. Upgrade graphene-django dependency to version >= 2.5.0.
+    4. Upgrade django-filter dependency to version >= 2.2.0.
+    5. Fixed bug 'DjangoSerializerOptions' object has no attribute 'interfaces' after update to graphene==2.1.8.
+    6. The tests were refactored and added some extra tests for DjangoSerializerType.
+    
+#### v0.4.5:
+    1. Fixed compatibilities issues to use graphene-django>=2.3.2.
+    2. Improved code quality and use Black code format.
+    3. Fixed minor bug with "time ago" date directive.
 
 #### v0.3.7:
     1. Improved DjangoListType and DjangoObjectType to share the filterset_class between the two class.

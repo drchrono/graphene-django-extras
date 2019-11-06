@@ -3,16 +3,17 @@ import operator
 from functools import partial
 
 from graphene import Field, List, ID, Argument
-from graphene.types.structures import Structure
+from graphene.types.structures import Structure, NonNull
+from graphene_django.fields import DjangoListField as DLF
 from graphene_django.filter.utils import get_filtering_args_from_filterset
 from graphene_django.utils import (
     maybe_queryset,
     is_valid_django_model,
     DJANGO_FILTER_INSTALLED,
 )
-from graphene_django_extras.settings import graphql_api_settings
 
 from graphene_django_extras.filters.filter import get_filterset_class
+from graphene_django_extras.settings import graphql_api_settings
 from .base_types import DjangoListObjectBase
 from .paginations.pagination import BaseDjangoGraphqlPagination
 from .utils import get_extra_filters, queryset_factory, get_related_fields, find_field
@@ -49,6 +50,14 @@ class DjangoObjectField(Field):
 # *********************************************** #
 # *************** FIELDS FOR LIST *************** #
 # *********************************************** #
+class DjangoListField(DLF):
+    def __init__(self, _type, *args, **kwargs):
+        if isinstance(_type, NonNull):
+            _type = _type.of_type
+
+        super(DLF, self).__init__(List(NonNull(_type)), *args, **kwargs)
+
+
 class DjangoFilterListField(Field):
     def __init__(
         self,

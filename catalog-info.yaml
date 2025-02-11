@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: graphene-django-extras
+  description: Extras functionalities for Graphene-Django
+  annotations:
+    business-unit: EverHealth
+    github.com/project-slug: drchrono/graphene-django-extras
+    product: DRC
+spec:
+  type: service
+  lifecycle: production
+  owner: EverHealth
+  implementation:
+    languages:
+    - Python
+    - Shell
